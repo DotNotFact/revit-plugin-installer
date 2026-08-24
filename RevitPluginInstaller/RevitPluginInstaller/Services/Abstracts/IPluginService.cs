@@ -8,7 +8,7 @@ public interface IPluginService
     IEnumerable<PluginPack> GetPluginsForVersionAsync(string version);
     IEnumerable<PluginPack> GetAllPluginsAsync();
 
-    Task InstallPluginsAsync(IEnumerable<string> files, string version);
+    Task InstallPluginsAsync(IEnumerable<string> files, string version, IProgress<int>? progress = null);
 
     Task RemoveFileFromPluginAsync(string filePath);
     Task RemovePluginAsync(Plugin plugin);

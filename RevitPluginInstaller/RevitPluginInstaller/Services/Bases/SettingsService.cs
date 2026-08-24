@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json;
+using Newtonsoft.Json;
 using RevitPluginInstaller.Models;
 using RevitPluginInstaller.Services.Abstracts;
 using System.IO;
@@ -7,28 +7,27 @@ namespace RevitPluginInstaller.Services.Bases;
 
 public class SettingsService : ISettingsService
 {
-    private const string SettingsFileName = "settings.json"; 
-    private string _settingsFileName;  
+    private const string SettingsFileName = "settings.json";
+    private readonly string _settingsFileName;
     private SettingsResponse _settings;
 
     public SettingsService()
     {
-        LoadSettingsAsync();
+        _settingsFileName = AppContext.BaseDirectory + SettingsFileName;
+        _settings = LoadSettings();
     }
 
-    private async Task LoadSettingsAsync()
+    private SettingsResponse LoadSettings()
     {
-        _settingsFileName = AppContext.BaseDirectory + SettingsFileName;
         if (File.Exists(_settingsFileName))
         {
             var json = File.ReadAllText(_settingsFileName);
-            _settings = JsonConvert.DeserializeObject<SettingsResponse>(json) ?? new();
+            return JsonConvert.DeserializeObject<SettingsResponse>(json) ?? new();
         }
-        else
-        {
-            _settings = new();
-            await SaveSettingsAsync();
-        }
+
+        var settings = new SettingsResponse();
+        File.WriteAllText(_settingsFileName, JsonConvert.SerializeObject(settings));
+        return settings;
     }
 
     private async Task SaveSettingsAsync()

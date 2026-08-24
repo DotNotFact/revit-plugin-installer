@@ -7,7 +7,7 @@ namespace RevitPluginInstaller.Managers.Bases;
 public class PageManager(IServiceProvider serviceProvider) : IPageManager
 {
     private readonly IServiceProvider _serviceProvider = serviceProvider;
-    private Frame _frame;
+    private Frame? _frame;
 
     public Page ActivePage => _frame?.Content as Page ?? new Page();
 

@@ -4,6 +4,7 @@ using RevitPluginInstaller.ViewModels.Base;
 using RevitPluginInstaller.Managers.Bases;
 using RevitPluginInstaller.Views.Pages;
 using System.Windows.Input;
+using System.IO;
 
 namespace RevitPluginInstaller.ViewModels.Pages;
 
@@ -26,13 +27,13 @@ public class ChooseViewModel : ViewModel
 
     #region [ RevitVersions ]
 
-    public IEnumerable<string> RevitVersions { get; private set; }
+    public IEnumerable<string> RevitVersions { get; private set; } = [];
 
     #endregion
 
     #region [ SelectedVersion ]
 
-    private string _selectedVersion;
+    private string _selectedVersion = string.Empty;
     public string SelectedVersion
     {
         get => _selectedVersion;
@@ -59,14 +60,14 @@ public class ChooseViewModel : ViewModel
 
     public ICommand SelectVersionCommand { get; }
 
-    private async void OnSelectVersionExecuteAsync(object p)
+    private async void OnSelectVersionExecuteAsync(object? p)
     {
         await _settingsService.SetSelectedVersionAsync(SelectedVersion);
         _pageManager.Navigate<DownloadPage>();
 
     }
 
-    private bool CanSelectVersionExecute(object p)
+    private bool CanSelectVersionExecute(object? p)
     {
         if (!string.IsNullOrEmpty(SelectedVersion))
             return true;
@@ -89,11 +90,16 @@ public class ChooseViewModel : ViewModel
         LoadRevitVersions();
     }
 
-    private async Task LoadRevitVersions()
+    private void LoadRevitVersions()
     {
-        var revitPath = await _settingsService.GetRevitPathAsync();
-        var versions = _pluginService.GetAvailableRevitVersions(revitPath);
+        var revitPath = _settingsService.GetRevitPathAsync().GetAwaiter().GetResult();
 
-        RevitVersions = versions;
+        if (string.IsNullOrEmpty(revitPath) || !Directory.Exists(Path.Combine(revitPath, "Addins")))
+        {
+            RevitVersions = [];
+            return;
+        }
+
+        RevitVersions = _pluginService.GetAvailableRevitVersions(revitPath);
     }
 }

@@ -38,7 +38,7 @@ public class MainWindowViewModel : ViewModel
     private Theme _currentTheme = Theme.Dark;
     public ICommand ToggleThemeCommand { get; }
 
-    private void OnToggleThemeCommandExecute(object p)
+    private void OnToggleThemeCommandExecute(object? p)
     {
         _currentTheme = _currentTheme is Theme.Dark ? Theme.Light : Theme.Dark;
         ThemeManager.ApplyTheme(_currentTheme);

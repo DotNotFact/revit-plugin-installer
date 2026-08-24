@@ -31,7 +31,7 @@ public class DownloadViewModel : ViewModel
 
     #endregion
 
-    #region [ Variables ] 
+    #region [ Variables ]
 
     #region [ PluginPacks ]
 
@@ -41,7 +41,7 @@ public class DownloadViewModel : ViewModel
 
     #region [ PluginResponses ]
 
-    private PluginResponse _pluginResponses;
+    private PluginResponse _pluginResponses = new();
     public PluginResponse PluginResponses
     {
         get => _pluginResponses;
@@ -73,9 +73,9 @@ public class DownloadViewModel : ViewModel
 
     #region [ DropCommand ]
 
-    public ICommand DropCommand { get; private set; }
+    public ICommand DropCommand { get; private set; } = null!;
 
-    private async void DropCommandExecuteAsync(object p)
+    private async void DropCommandExecuteAsync(object? p)
     {
         if (p is not IDataObject dataObject || !dataObject.GetDataPresent(DataFormats.FileDrop))
             return;
@@ -106,9 +106,9 @@ public class DownloadViewModel : ViewModel
 
     #region [ InstallPluginCommand ]
 
-    public ICommand InstallPluginCommand { get; private set; }
+    public ICommand InstallPluginCommand { get; private set; } = null!;
 
-    private async void OnInstallPluginCommandExecuteAsync(object p)
+    private async void OnInstallPluginCommandExecuteAsync(object? p)
     {
         var selectedVersion = await _settingsService.GetSelectedVersionAsync();
 
@@ -133,28 +133,54 @@ public class DownloadViewModel : ViewModel
             return;
         }
 
-        await _pluginService.InstallPluginsAsync(pluginsToInstall.Select(p => p.Link), selectedVersion);
-        await ProgressBarInstallPluginsAsync(pluginsToInstall);
+        InstallationProgress = 0;
+        var progress = new Progress<int>(value => InstallationProgress = value);
+
+        await _pluginService.InstallPluginsAsync(pluginsToInstall.Select(p => p.Link), selectedVersion, progress);
         LoadPlugins();
+
+        await ShowMessageAsync($"Установлено плагинов: {count}");
     }
 
-    private async Task ProgressBarInstallPluginsAsync(ICollection<Plugin> plugins)
+    #endregion
+
+    #region [ RemoveAllPluginsCommand ]
+
+    public ICommand RemoveAllPluginsCommand { get; private set; } = null!;
+
+    private async void OnRemoveAllPluginsCommandExecuteAsync(object? p)
     {
-        InstallationProgress = 0;
+        if (!PluginResponses.PluginPacks.Any())
+        {
+            MessageBox.Show("Нет установленных плагинов.");
+            return;
+        }
 
-        for (int i = 0; i < plugins.Count; i++)
-            InstallationProgress = (int)((i + 1.0) / plugins.Count * 100);
+        if (!await CheckRevitRunningAsync())
+        {
+            MessageBox.Show("Пожалуйста закройте Revit перед удалением плагинов.", "Работает Revit");
+            return;
+        }
 
-        await ShowMessageAsync("ProgressBarInstallPluginsAsync - installed successfully!");
+        var result = await ShowConfirmationAsync("Вы уверены, что хотите удалить все плагины? Будут созданы резервные копии.");
+
+        if (result == MessageBoxResult.Yes)
+        {
+            await _pluginService.RemoveAllPluginsAsync();
+            LoadPlugins();
+
+            await _logger.LogAsync("Removed all plugins");
+            await ShowMessageAsync("Все плагины удалены, резервные копии сохранены.");
+        }
     }
 
     #endregion
 
     #region [ RemovePluginCommand ]
 
-    public ICommand RemovePluginCommand { get; private set; }
+    public ICommand RemovePluginCommand { get; private set; } = null!;
 
-    private async void OnRemovePluginCommandExecuteAsync(object p)
+    private async void OnRemovePluginCommandExecuteAsync(object? p)
     {
         if (p is not Plugin plugin)
             return;
@@ -196,9 +222,9 @@ public class DownloadViewModel : ViewModel
 
     #region [ CheckRevitVersionsCommand ]
 
-    public ICommand CheckRevitVersionsCommand { get; private set; }
+    public ICommand CheckRevitVersionsCommand { get; private set; } = null!;
 
-    private async void OnCheckRevitVersionsCommandExecuteAsync(object p)
+    private async void OnCheckRevitVersionsCommandExecuteAsync(object? p)
     {
         var revitPath = await _settingsService.GetRevitPathAsync();
         var versions = _pluginService.GetAvailableRevitVersions(revitPath);
@@ -211,9 +237,9 @@ public class DownloadViewModel : ViewModel
 
     #region [ ImportPluginsCommand ]
 
-    public ICommand ImportPluginsCommand { get; private set; }
+    public ICommand ImportPluginsCommand { get; private set; } = null!;
 
-    private async void OnImportPluginsCommandExecuteAsync(object p)
+    private async void OnImportPluginsCommandExecuteAsync(object? p)
     {
         var dialog = new OpenFileDialog
         {
@@ -233,9 +259,9 @@ public class DownloadViewModel : ViewModel
 
     #region [ ExportPluginsCommand ]
 
-    public ICommand ExportPluginsCommand { get; private set; }
+    public ICommand ExportPluginsCommand { get; private set; } = null!;
 
-    private async void OnExportPluginsCommandExecuteAsync(object p)
+    private async void OnExportPluginsCommandExecuteAsync(object? p)
     {
         var dialog = new SaveFileDialog
         {
@@ -282,6 +308,7 @@ public class DownloadViewModel : ViewModel
         ImportPluginsCommand = new ActionCommand(OnImportPluginsCommandExecuteAsync);
         ExportPluginsCommand = new ActionCommand(OnExportPluginsCommandExecuteAsync);
         RemovePluginCommand = new ActionCommand(OnRemovePluginCommandExecuteAsync);
+        RemoveAllPluginsCommand = new ActionCommand(OnRemoveAllPluginsCommandExecuteAsync);
         InstallPluginCommand = new ActionCommand(OnInstallPluginCommandExecuteAsync);
         DropCommand = new ActionCommand(DropCommandExecuteAsync);
     }

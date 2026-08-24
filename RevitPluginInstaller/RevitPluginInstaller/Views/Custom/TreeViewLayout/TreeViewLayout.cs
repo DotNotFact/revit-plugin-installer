@@ -8,7 +8,7 @@ public class TreeViewLayout : TreeView
 {
     private const int MinUpdateIntervalMs = 300;
     private DateTime _lastUpdateTime;
-    private FrameworkElement _parent;
+    private FrameworkElement? _parent;
 
     public TreeViewLayout()
     {
@@ -64,5 +64,7 @@ public class TreeViewLayout : TreeView
         {
             ClearValue(MaxHeightProperty);
         }
+
+        _lastUpdateTime = DateTime.Now;
     }
 }

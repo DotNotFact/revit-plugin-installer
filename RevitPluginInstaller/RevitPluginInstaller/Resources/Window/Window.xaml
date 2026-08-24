@@ -10,11 +10,11 @@
         <Setter Property="FontWeight" Value="Normal" />
         <Setter Property="FontSize" Value="16" />
 
-        <Setter Property="Height" Value="650" />
-        <Setter Property="Width" Value="650" />
+        <Setter Property="Height" Value="700" />
+        <Setter Property="Width" Value="850" />
 
         <Setter Property="MinHeight" Value="520" />
-        <Setter Property="MinWidth" Value="650" />
+        <Setter Property="MinWidth" Value="760" />
 
         <Setter Property="MaxHeight" Value="{Binding Source={x:Static SystemParameters.MaximizedPrimaryScreenHeight}}" />
         <Setter Property="MaxWidth" Value="{Binding Source={x:Static SystemParameters.MaximizedPrimaryScreenWidth}}" />

@@ -19,7 +19,7 @@ public class SettingsViewModel : ViewModel
 
     #region [ RevitPath ]
 
-    private string _revitPath;
+    private string _revitPath = string.Empty;
     public string RevitPath
     {
         get => _revitPath;
@@ -46,7 +46,7 @@ public class SettingsViewModel : ViewModel
 
     public ICommand SelectFolderCommand { get; }
 
-    private async void OnSelectFolderCommandExecuteAsync(object p)
+    private async void OnSelectFolderCommandExecuteAsync(object? p)
     {
         var dialog = new OpenFolderDialog
         {
@@ -82,8 +82,8 @@ public class SettingsViewModel : ViewModel
         LoadSettings();
     }
 
-    private async Task LoadSettings()
+    private void LoadSettings()
     {
-        RevitPath = await _settingsService.GetRevitPathAsync();
+        RevitPath = _settingsService.GetRevitPathAsync().GetAwaiter().GetResult();
     }
 }

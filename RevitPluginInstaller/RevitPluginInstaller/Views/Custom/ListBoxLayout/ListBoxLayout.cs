@@ -8,7 +8,7 @@ public class ListBoxLayout : ListBox
 {
     private const int MinUpdateIntervalMs = 300;
     private DateTime _lastUpdateTime;
-    private FrameworkElement _parent;
+    private FrameworkElement? _parent;
 
     public ListBoxLayout()
     {
@@ -64,5 +64,7 @@ public class ListBoxLayout : ListBox
         {
             ClearValue(MaxHeightProperty);
         }
+
+        _lastUpdateTime = DateTime.Now;
     }
 }

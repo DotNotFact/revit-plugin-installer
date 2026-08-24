@@ -1,9 +1,8 @@
-﻿using RevitPluginInstaller.Managers.Abstracts;
+using RevitPluginInstaller.Managers.Abstracts;
 using RevitPluginInstaller.Services.Abstracts;
 using RevitPluginInstaller.Models;
 using Newtonsoft.Json;
 using System.IO;
-using System.Windows;
 
 namespace RevitPluginInstaller.Services.Bases;
 
@@ -11,10 +10,10 @@ public class PluginService : IPluginService
 {
     #region [ Fields ]
 
-    private const string _luginsFileName = "plugins.json";
-    private const string _backupFolderName = "backups";
+    private const string PluginsFileName = "plugins.json";
+    private const string BackupFolderName = "backups";
 
-    private PluginResponse _pluginResponses;
+    private PluginResponse _pluginResponses = new();
 
     #endregion
 
@@ -32,15 +31,22 @@ public class PluginService : IPluginService
         _fileService = fileService;
         _logger = logger;
 
-        LoadPluginsAsync();
+        LoadPlugins();
     }
 
     #region [ Получение плагинов (версий Revit) ]
 
     public IEnumerable<string> GetAvailableRevitVersions(string revitPath)
     {
+        if (string.IsNullOrEmpty(revitPath))
+            return [];
+
         var addinsPath = Path.Combine(revitPath, "Addins");
-        return Directory.GetDirectories(addinsPath).Select(Path.GetFileName);
+
+        if (!Directory.Exists(addinsPath))
+            return [];
+
+        return Directory.GetDirectories(addinsPath).Select(Path.GetFileName)!;
     }
 
     public IEnumerable<PluginPack> GetPluginsForVersionAsync(string version)
@@ -57,7 +63,7 @@ public class PluginService : IPluginService
 
     #region [ Установка плагинов ]
 
-    public async Task InstallPluginsAsync(IEnumerable<string> files, string version)
+    public async Task InstallPluginsAsync(IEnumerable<string> files, string version, IProgress<int>? progress = null)
     {
         var revitPath = await _settingsService.GetRevitPathAsync();
         var destinationPath = Path.Combine(revitPath, "Addins", version);
@@ -70,8 +76,11 @@ public class PluginService : IPluginService
             InstallationDate = DateTime.Now,
         };
 
-        foreach (var sourcePath in files)
+        var fileList = files.ToList();
+
+        for (int i = 0; i < fileList.Count; i++)
         {
+            var sourcePath = fileList[i];
             string fileName = Path.GetFileName(sourcePath);
             string destinationFilePath = Path.Combine(destinationPath, fileName);
 
@@ -86,8 +95,6 @@ public class PluginService : IPluginService
                 // Create backup of the existing plugin
                 await CreateBackupAsync(existingPlugin);
 
-                MessageBox.Show(_pluginResponses.PluginPacks.Count.ToString());
-
                 // Удаление существующего плагина из соответствующего PluginPack
                 foreach (var pack in _pluginResponses.PluginPacks.ToList())
                 {
@@ -96,8 +103,6 @@ public class PluginService : IPluginService
                     if (pack.Plugins.Count == 0)
                         _pluginResponses.PluginPacks.Remove(pack);
                 }
-
-                MessageBox.Show(_pluginResponses.PluginPacks.Count.ToString());
 
                 // Delete the existing file or directory
                 if (IsFile(destinationFilePath))
@@ -127,6 +132,8 @@ public class PluginService : IPluginService
                 IsDrop = false
             };
             newPluginPack.Plugins.Add(newPlugin);
+
+            progress?.Report((int)((i + 1.0) / fileList.Count * 100));
         }
 
         _pluginResponses.PluginPacks.Add(newPluginPack);
@@ -178,9 +185,30 @@ public class PluginService : IPluginService
         await _logger.LogAsync($"Removed file: {filePath}");
     }
 
-    public Task RemoveAllPluginsAsync()
+    public async Task RemoveAllPluginsAsync()
     {
-        throw new NotImplementedException();
+        var allPlugins = _pluginResponses.PluginPacks
+            .SelectMany(pack => pack.Plugins)
+            .ToList();
+
+        foreach (var plugin in allPlugins)
+        {
+            await CreateBackupAsync(plugin);
+
+            if (IsFile(plugin.Link))
+            {
+                await _fileService.DeleteFileAsync(plugin.Link);
+            }
+            else if (IsDirectory(plugin.Link))
+            {
+                Directory.Delete(plugin.Link, true);
+            }
+        }
+
+        _pluginResponses.PluginPacks.Clear();
+
+        await SavePluginsAsync();
+        await _logger.LogAsync($"Removed all plugins ({allPlugins.Count}), backups created.");
     }
 
     #endregion
@@ -212,7 +240,7 @@ public class PluginService : IPluginService
     public async Task CreateBackupAsync(Plugin plugin)
     {
         var revitPath = await _settingsService.GetRevitPathAsync();
-        var backupPath = Path.Combine(revitPath, _backupFolderName, DateTime.Now.ToString("yyyyMMddHHmmss"));
+        var backupPath = Path.Combine(revitPath, BackupFolderName, DateTime.Now.ToString("yyyyMMddHHmmss"));
 
         Directory.CreateDirectory(backupPath);
 
@@ -234,30 +262,40 @@ public class PluginService : IPluginService
 
     private async Task SavePluginsAsync()
     {
-        var pluginsPath = Path.Combine(await _settingsService.GetRevitPathAsync(), _luginsFileName);
+        var pluginsPath = Path.Combine(await _settingsService.GetRevitPathAsync(), PluginsFileName);
         var json = JsonConvert.SerializeObject(_pluginResponses, Formatting.Indented);
 
         await File.WriteAllTextAsync(pluginsPath, json);
     }
 
-    private async Task LoadPluginsAsync()
+    private void LoadPlugins()
     {
-        var pluginsPath = Path.Combine(await _settingsService.GetRevitPathAsync(), _luginsFileName);
+        var revitPath = _settingsService.GetRevitPathAsync().GetAwaiter().GetResult();
+
+        if (string.IsNullOrEmpty(revitPath))
+        {
+            _pluginResponses = new();
+            return;
+        }
+
+        var pluginsPath = Path.Combine(revitPath, PluginsFileName);
 
         if (File.Exists(pluginsPath))
         {
-            var json = await File.ReadAllTextAsync(pluginsPath);
+            var json = File.ReadAllText(pluginsPath);
             _pluginResponses = JsonConvert.DeserializeObject<PluginResponse>(json) ?? new();
         }
         else
         {
             _pluginResponses = new();
-            await SavePluginsAsync();
         }
     }
 
     static bool IsDirectory(string path)
     {
+        if (!Directory.Exists(path))
+            return false;
+
         FileAttributes attr = File.GetAttributes(path);
         return (attr & FileAttributes.Directory) == FileAttributes.Directory;
     }

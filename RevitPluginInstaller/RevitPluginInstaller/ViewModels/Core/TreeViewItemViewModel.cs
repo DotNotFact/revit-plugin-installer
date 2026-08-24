@@ -6,14 +6,14 @@ namespace RevitPluginInstaller.ViewModels.Core;
 
 public class TreeViewItemViewModel : ViewModel
 {
-    public string DisplayName { get; set; }
+    public required string DisplayName { get; set; }
 
-    public object Data { get; set; }
+    public required object Data { get; set; }
     public ObservableCollection<TreeViewItemViewModel> Children { get; } = [];
 
     public bool IsExpanded { get; set; }
 
     public TreeViewItemType ItemType { get; set; }
 
-    public ICommand RemovePluginCommand { get; set; }
+    public ICommand? RemovePluginCommand { get; set; }
 }

@@ -1,56 +1,78 @@
-﻿using RevitPluginInstaller.Infrastructure.Comands.Base;
-using RevitPluginInstaller.Services.Abstracts;
+using Microsoft.Win32;
+using RevitPluginInstaller.Infrastructure.Comands.Base;
 using RevitPluginInstaller.Managers.Abstracts;
+using RevitPluginInstaller.Models;
+using RevitPluginInstaller.Services.Abstracts;
 using RevitPluginInstaller.ViewModels.Base;
 using RevitPluginInstaller.ViewModels.Core;
 using System.Collections.ObjectModel;
-using RevitPluginInstaller.Models;
-using System.Windows.Input;
 using System.Diagnostics;
-using Microsoft.Win32;
-using System.Windows;
 using System.IO;
-using System.Collections;
-using System;
+using System.Windows;
+using System.Windows.Input;
 
 namespace RevitPluginInstaller.ViewModels.Pages;
 
+/// <summary>"Установленные" section: plugins of the selected Revit version plus files queued for installation.</summary>
 public class DownloadViewModel : ViewModel
 {
-    #region [ Managers ]
+    #region [ DI ]
 
     private readonly ILoggerManager _logger;
-
-    #endregion
-
-    #region [ Services ]
-
     private readonly ISettingsService _settingsService;
     private readonly IPluginService _pluginService;
-    private readonly IFileService _fileService;
 
     #endregion
 
-    #region [ Variables ]
+    #region [ State ]
 
-    #region [ PluginPacks ]
+    private readonly List<Plugin> _pending = [];
 
-    public ObservableCollection<TreeViewItemViewModel> PluginPacks { get; } = [];
+    public ObservableCollection<PluginItemViewModel> Plugins { get; } = [];
 
-    #endregion
-
-    #region [ PluginResponses ]
-
-    private PluginResponse _pluginResponses = new();
-    public PluginResponse PluginResponses
+    private string _version = string.Empty;
+    public string Version
     {
-        get => _pluginResponses;
-        set => Set(ref _pluginResponses, value);
+        get => _version;
+        private set
+        {
+            if (Set(ref _version, value))
+                OnPropertyChanged(nameof(Title));
+        }
     }
 
-    #endregion
+    public string Title => string.IsNullOrEmpty(Version) ? "Плагины" : $"Плагины — Revit {Version}";
 
-    #region [ InstallationProgress ]
+    private string _summary = string.Empty;
+    public string Summary
+    {
+        get => _summary;
+        private set => Set(ref _summary, value);
+    }
+
+    private int _pendingCount;
+    public int PendingCount
+    {
+        get => _pendingCount;
+        private set
+        {
+            if (Set(ref _pendingCount, value))
+            {
+                OnPropertyChanged(nameof(HasPending));
+                OnPropertyChanged(nameof(InstallButtonText));
+            }
+        }
+    }
+
+    public bool HasPending => PendingCount > 0;
+    public string InstallButtonText => HasPending ? $"Установить ({PendingCount})" : "+ Установить";
+
+    private bool _isBusy;
+    public bool IsBusy
+    {
+        get => _isBusy;
+        private set => Set(ref _isBusy, value);
+    }
 
     private int _installationProgress;
     public int InstallationProgress
@@ -59,326 +81,376 @@ public class DownloadViewModel : ViewModel
         set => Set(ref _installationProgress, value);
     }
 
-    #endregion
+    private string _statusText = "Готово";
+    public string StatusText
+    {
+        get => _statusText;
+        set => Set(ref _statusText, value);
+    }
 
-    #region [ Heading ]
+    private bool _isEmpty;
+    public bool IsEmpty
+    {
+        get => _isEmpty;
+        private set => Set(ref _isEmpty, value);
+    }
 
-    public string Heading => "Перетащите сюда все необходимые плагины";
-
-    #endregion
+    public string DropHint => "Перетащите сюда .dll / .addin файлы или папку плагина — установка с автоматическим бэкапом";
 
     #endregion
 
     #region [ Commands ]
 
-    #region [ DropCommand ]
-
-    public ICommand DropCommand { get; private set; } = null!;
-
-    private async void DropCommandExecuteAsync(object? p)
-    {
-        if (p is not IDataObject dataObject || !dataObject.GetDataPresent(DataFormats.FileDrop))
-            return;
-
-        string[] files = (string[])dataObject.GetData(DataFormats.FileDrop);
-        var selectedVersion = await _settingsService.GetSelectedVersionAsync();
-
-        var pluginPack = new PluginPack
-        {
-            Id = Guid.NewGuid(),
-            Name = files.Length.ToString(),
-            Version = selectedVersion,
-            InstallationDate = DateTime.Now,
-            Plugins = files.Select(file => new Plugin
-            {
-                Id = Guid.NewGuid(),
-                Name = Path.GetFileName(file),
-                Link = file,
-                IsDrop = true
-            }).ToList()
-        };
-
-        PluginResponses.PluginPacks.Add(pluginPack);
-        UpdateTreeView();
-    }
-
-    #endregion
-
-    #region [ InstallPluginCommand ]
-
-    public ICommand InstallPluginCommand { get; private set; } = null!;
-
-    private async void OnInstallPluginCommandExecuteAsync(object? p)
-    {
-        var selectedVersion = await _settingsService.GetSelectedVersionAsync();
-
-        var pluginsToInstall = _pluginResponses.PluginPacks
-            .SelectMany(pack => pack.Plugins)
-            .Where(plugin => plugin.IsDrop)
-            .GroupBy(plugin => plugin.Link)
-            .Select(group => group.First())
-            .ToList();
-
-        var count = pluginsToInstall.Count;
-
-        if (count == 0)
-        {
-            MessageBox.Show("Пожалуйста, выберите плагин");
-            return;
-        }
-
-        if (!await CheckRevitRunningAsync())
-        {
-            MessageBox.Show("Пожалуйста закройте Revit перед установкой плагина.", "Работает Revit");
-            return;
-        }
-
-        InstallationProgress = 0;
-        var progress = new Progress<int>(value => InstallationProgress = value);
-
-        await _pluginService.InstallPluginsAsync(pluginsToInstall.Select(p => p.Link), selectedVersion, progress);
-        LoadPlugins();
-
-        await ShowMessageAsync($"Установлено плагинов: {count}");
-    }
-
-    #endregion
-
-    #region [ RemoveAllPluginsCommand ]
-
-    public ICommand RemoveAllPluginsCommand { get; private set; } = null!;
-
-    private async void OnRemoveAllPluginsCommandExecuteAsync(object? p)
-    {
-        if (!PluginResponses.PluginPacks.Any())
-        {
-            MessageBox.Show("Нет установленных плагинов.");
-            return;
-        }
-
-        if (!await CheckRevitRunningAsync())
-        {
-            MessageBox.Show("Пожалуйста закройте Revit перед удалением плагинов.", "Работает Revit");
-            return;
-        }
-
-        var result = await ShowConfirmationAsync("Вы уверены, что хотите удалить все плагины? Будут созданы резервные копии.");
-
-        if (result == MessageBoxResult.Yes)
-        {
-            await _pluginService.RemoveAllPluginsAsync();
-            LoadPlugins();
-
-            await _logger.LogAsync("Removed all plugins");
-            await ShowMessageAsync("Все плагины удалены, резервные копии сохранены.");
-        }
-    }
-
-    #endregion
-
-    #region [ RemovePluginCommand ]
-
-    public ICommand RemovePluginCommand { get; private set; } = null!;
-
-    private async void OnRemovePluginCommandExecuteAsync(object? p)
-    {
-        if (p is not Plugin plugin)
-            return;
-
-        if (!await CheckRevitRunningAsync())
-        {
-            MessageBox.Show("Пожалуйста закройте Revit перед установкой плагина.", "Работает Revit");
-            return;
-        }
-
-        var result = await ShowConfirmationAsync("Вы уверены, что хотите удалить этот плагин? Будет создана резервная копия.");
-
-        if (result == MessageBoxResult.Yes)
-        {
-            await RemovePluginAsync(plugin);
-            UpdateTreeView();
-
-            LoadPlugins();
-        }
-    }
-
-    private async Task RemovePluginAsync(Plugin plugin)
-    {
-        if (plugin.IsDrop)
-        {
-            PluginResponses.PluginPacks.RemoveAll(pack => pack.Plugins.Contains(plugin));
-        }
-        else
-        {
-            await _pluginService.CreateBackupAsync(plugin);
-            await _pluginService.RemovePluginAsync(plugin);
-            PluginResponses.PluginPacks.RemoveAll(pp => pp.Plugins.Any(p => p.Link == plugin.Link));
-        }
-
-        await _logger.LogAsync($"Removed plugin: {plugin.Name}");
-    }
-
-    #endregion 
-
-    #region [ CheckRevitVersionsCommand ]
-
-    public ICommand CheckRevitVersionsCommand { get; private set; } = null!;
-
-    private async void OnCheckRevitVersionsCommandExecuteAsync(object? p)
-    {
-        var revitPath = await _settingsService.GetRevitPathAsync();
-        var versions = _pluginService.GetAvailableRevitVersions(revitPath);
-
-        var message = string.Join(Environment.NewLine, versions);
-        await ShowMessageAsync($"Доступные Revit версии:{Environment.NewLine}{message}");
-    }
-
-    #endregion
-
-    #region [ ImportPluginsCommand ]
-
-    public ICommand ImportPluginsCommand { get; private set; } = null!;
-
-    private async void OnImportPluginsCommandExecuteAsync(object? p)
-    {
-        var dialog = new OpenFileDialog
-        {
-            Filter = "JSON files (*.json)|*.json",
-            DefaultExt = "json"
-        };
-
-        if (dialog.ShowDialog() == true)
-        {
-            await _pluginService.ImportPluginsAsync(dialog.FileName);
-            LoadPlugins();
-            await _logger.LogAsync($"Imported plugins from: {dialog.FileName}");
-        }
-    }
-
-    #endregion
-
-    #region [ ExportPluginsCommand ]
-
-    public ICommand ExportPluginsCommand { get; private set; } = null!;
-
-    private async void OnExportPluginsCommandExecuteAsync(object? p)
-    {
-        var dialog = new SaveFileDialog
-        {
-            Filter = "JSON files (*.json)|*.json",
-            DefaultExt = "json",
-            FileName = "RevitPlugins"
-        };
-
-        if (dialog.ShowDialog() == true)
-        {
-            await _pluginService.ExportPluginsAsync(dialog.FileName);
-            await _logger.LogAsync($"Exported plugins to: {dialog.FileName}");
-        }
-    }
-
-    #endregion
+    public ICommand RefreshCommand { get; }
+    public ICommand ExportCommand { get; }
+    public ICommand InstallCommand { get; }
+    public ICommand BrowseCommand { get; }
+    public ICommand RemoveAllCommand { get; }
+    public ICommand RemoveCommand { get; }
+    public ICommand BackupCommand { get; }
+    public ICommand OpenLocationCommand { get; }
+    public ICommand DropCommand { get; }
 
     #endregion
 
     public DownloadViewModel(
         IPluginService pluginService,
         ISettingsService settingsService,
-        IFileService fileService,
         ILoggerManager logger)
     {
-        _settingsService = settingsService;
         _pluginService = pluginService;
-        _fileService = fileService;
+        _settingsService = settingsService;
         _logger = logger;
 
-        _logger.LogAsync("[Information] - Initializing DownloadViewModel");
+        RefreshCommand = new ActionCommand(_ => Load());
+        ExportCommand = new ActionCommand(OnExportAsync, _ => !IsBusy);
+        InstallCommand = new ActionCommand(OnInstallAsync, _ => !IsBusy);
+        BrowseCommand = new ActionCommand(_ => Browse(), _ => !IsBusy);
+        RemoveAllCommand = new ActionCommand(OnRemoveAllAsync, _ => !IsBusy && Plugins.Any(p => p.IsInstalled));
+        RemoveCommand = new ActionCommand(OnRemoveAsync, _ => !IsBusy);
+        BackupCommand = new ActionCommand(OnBackupAsync, p => !IsBusy && p is PluginItemViewModel { IsInstalled: true });
+        OpenLocationCommand = new ActionCommand(OnOpenLocation);
+        DropCommand = new ActionCommand(OnDrop, _ => !IsBusy);
 
-        PluginResponses = new();
-
-        InitializeCommands();
-        LoadPlugins();
-
-        _logger.LogAsync("DownloadViewModel initialized");
+        Load();
     }
 
-    private void InitializeCommands()
+    #region [ Loading ]
+
+    private void Load()
     {
-        CheckRevitVersionsCommand = new ActionCommand(OnCheckRevitVersionsCommandExecuteAsync);
-        ImportPluginsCommand = new ActionCommand(OnImportPluginsCommandExecuteAsync);
-        ExportPluginsCommand = new ActionCommand(OnExportPluginsCommandExecuteAsync);
-        RemovePluginCommand = new ActionCommand(OnRemovePluginCommandExecuteAsync);
-        RemoveAllPluginsCommand = new ActionCommand(OnRemoveAllPluginsCommandExecuteAsync);
-        InstallPluginCommand = new ActionCommand(OnInstallPluginCommandExecuteAsync);
-        DropCommand = new ActionCommand(DropCommandExecuteAsync);
+        Version = _settingsService.GetSelectedVersionAsync().GetAwaiter().GetResult();
+
+        var packs = _pluginService.GetPluginsForVersionAsync(Version)
+            .OrderByDescending(p => p.InstallationDate)
+            .ToList();
+
+        Plugins.Clear();
+
+        foreach (var plugin in _pending)
+            Plugins.Add(new PluginItemViewModel(plugin, new PluginPack { Version = Version }));
+
+        foreach (var pack in packs)
+            foreach (var plugin in pack.Plugins)
+                Plugins.Add(new PluginItemViewModel(plugin, pack));
+
+        PendingCount = _pending.Count;
+        IsEmpty = Plugins.Count == 0;
+        UpdateSummary();
+        CommandManager.InvalidateRequerySuggested();
     }
 
-    private async void LoadPlugins()
+    private void UpdateSummary()
     {
-        InstallationProgress = 0;
+        var installed = Plugins.Count(p => p.IsInstalled);
+        var backups = _pluginService.GetBackups().Count;
 
-        var selectedVersion = await _settingsService.GetSelectedVersionAsync();
-        var pluginResponse = _pluginService.GetPluginsForVersionAsync(selectedVersion);
+        var parts = new List<string> { $"{installed} {PluralInstalled(installed)}" };
+        if (backups > 0) parts.Add($"{backups} {PluralBackup(backups)}");
+        if (PendingCount > 0) parts.Add($"{PendingCount} к установке");
 
-        PluginResponses.PluginPacks = pluginResponse.ToList();
-        UpdateTreeView();
+        Summary = string.Join(" · ", parts);
     }
 
-    private void UpdateTreeView()
+    #endregion
+
+    #region [ Pending files ]
+
+    private void OnDrop(object? p)
     {
-        PluginPacks.Clear();
-        foreach (var pack in PluginResponses.PluginPacks)
+        if (p is not IDataObject dataObject || !dataObject.GetDataPresent(DataFormats.FileDrop))
+            return;
+
+        if (dataObject.GetData(DataFormats.FileDrop) is string[] files)
+            Enqueue(files);
+    }
+
+    private void Browse()
+    {
+        var dialog = new OpenFileDialog
         {
-            var packItem = CreatePackTreeViewItem(pack);
-            PluginPacks.Add(packItem);
+            Title = "Выберите файлы плагина",
+            Multiselect = true,
+            Filter = "Плагины Revit (*.addin;*.dll)|*.addin;*.dll|Все файлы (*.*)|*.*",
+        };
+
+        if (dialog.ShowDialog() == true)
+            Enqueue(dialog.FileNames);
+    }
+
+    private void Enqueue(IEnumerable<string> paths)
+    {
+        var added = 0;
+
+        foreach (var path in paths)
+        {
+            if (_pending.Any(x => string.Equals(x.Link, path, StringComparison.OrdinalIgnoreCase)))
+                continue;
+
+            _pending.Add(new Plugin
+            {
+                Id = Guid.NewGuid(),
+                Name = Path.GetFileName(path),
+                Link = path,
+                IsDrop = true,
+            });
+            added++;
+        }
+
+        if (added > 0)
+        {
+            StatusText = $"В очереди на установку: {_pending.Count}";
+            Load();
         }
     }
 
-    private TreeViewItemViewModel CreatePackTreeViewItem(PluginPack pack)
+    #endregion
+
+    #region [ Install ]
+
+    private async void OnInstallAsync(object? _)
     {
-        var packItem = new TreeViewItemViewModel
+        if (_pending.Count == 0)
         {
-            DisplayName = $"Pack: {pack.Plugins.Count} - {pack.Version} - Installed: {pack.InstallationDate:s}",
-            IsExpanded = false,
-            ItemType = TreeViewItemType.Pack,
-            Data = pack
-        };
+            Browse();
+            if (_pending.Count == 0)
+                return;
+        }
 
-        foreach (var plugin in pack.Plugins)
-            packItem.Children.Add(CreatePluginTreeViewItem(plugin));
+        if (string.IsNullOrEmpty(Version))
+        {
+            MessageBox.Show("Сначала выберите версию Revit в боковой панели.", "Версия не выбрана", MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
 
-        return packItem;
+        if (IsRevitRunning())
+        {
+            MessageBox.Show("Закройте Revit перед установкой плагинов.", "Revit запущен", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        var files = _pending.Select(p => p.Link).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        var count = files.Count;
+
+        try
+        {
+            IsBusy = true;
+            InstallationProgress = 0;
+            StatusText = $"Установка {count} {PluralFiles(count)} — копирование…";
+
+            var progress = new Progress<int>(value =>
+            {
+                InstallationProgress = value;
+                StatusText = $"Установка в Revit {Version} — копирование файлов… {value}%";
+            });
+
+            await _pluginService.InstallPluginsAsync(files, Version, progress);
+
+            _pending.Clear();
+            StatusText = $"Установлено: {count} {PluralFiles(count)} · Revit {Version}";
+        }
+        catch (Exception ex)
+        {
+            await _logger.LogAsync($"[Error] Install failed: {ex}");
+            StatusText = "Ошибка установки — подробности в логе";
+            MessageBox.Show(ex.Message, "Не удалось установить", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+        finally
+        {
+            IsBusy = false;
+            Load();
+        }
     }
 
-    private TreeViewItemViewModel CreatePluginTreeViewItem(Plugin plugin)
+    #endregion
+
+    #region [ Remove / backup ]
+
+    private async void OnRemoveAsync(object? p)
     {
-        var pluginItem = new TreeViewItemViewModel
-        {
-            DisplayName = plugin.Name,
-            IsExpanded = false,
-            ItemType = TreeViewItemType.Plugin,
-            Data = plugin,
-            RemovePluginCommand = RemovePluginCommand
-        };
+        if (p is not PluginItemViewModel item)
+            return;
 
-        pluginItem.Children.Add(new TreeViewItemViewModel
+        if (item.IsPending)
         {
-            DisplayName = plugin.Link,
-            IsExpanded = false,
-            ItemType = TreeViewItemType.Path,
-            Data = plugin.Link
-        });
+            _pending.RemoveAll(x => x.Link == item.Plugin.Link);
+            StatusText = _pending.Count == 0 ? "Очередь установки пуста" : $"В очереди на установку: {_pending.Count}";
+            Load();
+            return;
+        }
 
-        return pluginItem;
+        if (IsRevitRunning())
+        {
+            MessageBox.Show("Закройте Revit перед удалением плагинов.", "Revit запущен", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        var result = MessageBox.Show(
+            $"Удалить «{item.Name}»?\nПеред удалением будет создана резервная копия.",
+            "Удаление плагина", MessageBoxButton.YesNo, MessageBoxImage.Question);
+
+        if (result != MessageBoxResult.Yes)
+            return;
+
+        try
+        {
+            IsBusy = true;
+            StatusText = $"Бэкап и удаление «{item.Name}»…";
+            await _pluginService.CreateBackupAsync(item.Plugin);
+            await _pluginService.RemovePluginAsync(item.Plugin);
+            StatusText = $"Удалён «{item.Name}», бэкап сохранён";
+        }
+        catch (Exception ex)
+        {
+            await _logger.LogAsync($"[Error] Remove failed: {ex}");
+            StatusText = "Ошибка удаления — подробности в логе";
+            MessageBox.Show(ex.Message, "Не удалось удалить", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+        finally
+        {
+            IsBusy = false;
+            Load();
+        }
     }
 
-    private Task<bool> CheckRevitRunningAsync() =>
-       Task.Run(() => Process.GetProcessesByName("Revit").Length == 0);
+    private async void OnRemoveAllAsync(object? _)
+    {
+        if (IsRevitRunning())
+        {
+            MessageBox.Show("Закройте Revit перед удалением плагинов.", "Revit запущен", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
 
-    private Task ShowMessageAsync(string message) =>
-        Task.Run(() => MessageBox.Show(message));
+        var result = MessageBox.Show(
+            "Удалить все установленные плагины?\nДля каждого будет создана резервная копия.",
+            "Удаление всех плагинов", MessageBoxButton.YesNo, MessageBoxImage.Warning);
 
-    private Task<MessageBoxResult> ShowConfirmationAsync(string message) =>
-        Task.Run(() => MessageBox.Show(message, "Confirm", MessageBoxButton.YesNo));
+        if (result != MessageBoxResult.Yes)
+            return;
 
+        try
+        {
+            IsBusy = true;
+            StatusText = "Создание бэкапов и удаление…";
+            await _pluginService.RemoveAllPluginsAsync();
+            StatusText = "Все плагины удалены, бэкапы сохранены";
+        }
+        catch (Exception ex)
+        {
+            await _logger.LogAsync($"[Error] Remove all failed: {ex}");
+            StatusText = "Ошибка удаления — подробности в логе";
+            MessageBox.Show(ex.Message, "Не удалось удалить", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+        finally
+        {
+            IsBusy = false;
+            Load();
+        }
+    }
+
+    private async void OnBackupAsync(object? p)
+    {
+        if (p is not PluginItemViewModel item)
+            return;
+
+        try
+        {
+            IsBusy = true;
+            StatusText = $"Создание бэкапа «{item.Name}»…";
+            await _pluginService.CreateBackupAsync(item.Plugin);
+            StatusText = $"Бэкап «{item.Name}» создан";
+        }
+        catch (Exception ex)
+        {
+            await _logger.LogAsync($"[Error] Backup failed: {ex}");
+            StatusText = "Ошибка бэкапа — подробности в логе";
+        }
+        finally
+        {
+            IsBusy = false;
+            UpdateSummary();
+        }
+    }
+
+    private void OnOpenLocation(object? p)
+    {
+        if (p is not PluginItemViewModel item)
+            return;
+
+        var path = item.Plugin.Link;
+
+        if (File.Exists(path))
+            Process.Start(new ProcessStartInfo("explorer.exe", $"/select,\"{path}\"") { UseShellExecute = true });
+        else if (Directory.Exists(path))
+            Process.Start(new ProcessStartInfo("explorer.exe", $"\"{path}\"") { UseShellExecute = true });
+        else
+            StatusText = "Файл не найден на диске";
+    }
+
+    #endregion
+
+    #region [ Export ]
+
+    private async void OnExportAsync(object? _)
+    {
+        var dialog = new SaveFileDialog
+        {
+            Title = "Экспорт списка плагинов",
+            Filter = "JSON (*.json)|*.json",
+            DefaultExt = "json",
+            FileName = $"RevitPlugins-{DateTime.Now:yyyyMMdd}",
+        };
+
+        if (dialog.ShowDialog() != true)
+            return;
+
+        await _pluginService.ExportPluginsAsync(dialog.FileName);
+        StatusText = $"Экспортировано в {Path.GetFileName(dialog.FileName)}";
+    }
+
+    #endregion
+
+    #region [ Helpers ]
+
+    private static bool IsRevitRunning() => Process.GetProcessesByName("Revit").Length > 0;
+
+    private static string PluralInstalled(int n) => "установлено";
+
+    private static string PluralBackup(int n)
+    {
+        var m10 = n % 10; var m100 = n % 100;
+        if (m10 == 1 && m100 != 11) return "бэкап";
+        if (m10 is >= 2 and <= 4 && m100 is < 12 or > 14) return "бэкапа";
+        return "бэкапов";
+    }
+
+    private static string PluralFiles(int n)
+    {
+        var m10 = n % 10; var m100 = n % 100;
+        if (m10 == 1 && m100 != 11) return "файл";
+        if (m10 is >= 2 and <= 4 && m100 is < 12 or > 14) return "файла";
+        return "файлов";
+    }
+
+    #endregion
 }

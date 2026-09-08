@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
 		<OutputType>WinExe</OutputType>
@@ -8,16 +8,15 @@
 		<UseWPF>true</UseWPF>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 		<ApplicationIcon>wwwroot\Images\Logo.ico</ApplicationIcon>
-	</PropertyGroup>  
+		<Version>2.0.0</Version>
+		<AssemblyTitle>Revit Plugin Manager</AssemblyTitle>
+		<Product>Revit Plugin Manager</Product>
+	</PropertyGroup>
 
 	<ItemGroup>
 	  <Resource Include="wwwroot\Images\Logo.ico">
 	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 	  </Resource>
-	</ItemGroup>
-
-	<ItemGroup>
-		<Folder Include="wwwroot\Fonts\" />
 	</ItemGroup>
 
 	<ItemGroup>

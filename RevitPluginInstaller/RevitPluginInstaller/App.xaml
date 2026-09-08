@@ -1,45 +1,13 @@
-﻿<Application x:Class="RevitPluginInstaller.App"
+<Application x:Class="RevitPluginInstaller.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
     <Application.Resources>
-
         <ResourceDictionary>
-
             <ResourceDictionary.MergedDictionaries>
-
-                <!-- Базовые стили -->
-                <ResourceDictionary Source="pack://application:,,,/RevitPluginInstaller;component/Resources/Converters/Converter.xaml" />
-                <ResourceDictionary Source="pack://application:,,,/RevitPluginInstaller;component/Resources/Window/Window.xaml"/>
-                <!--<ResourceDictionary Source="pack://application:,,,/RevitPluginInstaller;component/Resources/Generic.xaml" />-->
-
-                <!-- Темы -->
-                <ResourceDictionary Source="pack://application:,,,/RevitPluginInstaller;component/Resources/Themes/Light.xaml" />
-                <ResourceDictionary Source="pack://application:,,,/RevitPluginInstaller;component/Resources/Themes/Dark.xaml" />
-
-                <!-- Остальные ресурсы -->
-                <!--<ResourceDictionary Source="pack://application:,,,/RevitPluginInstaller;component/Resources/FluentWindow/FluentWindow.xaml"/>-->
-
-                <ResourceDictionary Source="pack://application:,,,/RevitPluginInstaller;component/Resources/ToggleButton/ToggleButton.xaml"/>
-                <ResourceDictionary Source="pack://application:,,,/RevitPluginInstaller;component/Resources/Button/Button.xaml"/>
-
-                <ResourceDictionary Source="pack://application:,,,/RevitPluginInstaller;component/Resources/ScrollViewer/ScrollViewer.xaml"/>
-
-                <ResourceDictionary Source="pack://application:,,,/RevitPluginInstaller;component/Resources/TreeView/TreeViewItem.xaml"/>
-                <ResourceDictionary Source="pack://application:,,,/RevitPluginInstaller;component/Resources/TreeView/TreeView.xaml"/>
-
-                <ResourceDictionary Source="pack://application:,,,/RevitPluginInstaller;component/Resources/ListBox/ListBoxItem.xaml"/>
-                <ResourceDictionary Source="pack://application:,,,/RevitPluginInstaller;component/Resources/ListBox/ListBox.xaml"/>
-
-                <ResourceDictionary Source="pack://application:,,,/RevitPluginInstaller;component/Resources/ProgressBar/ProgressBar.xaml"/>
-                <ResourceDictionary Source="pack://application:,,,/RevitPluginInstaller;component/Resources/TextBlock/TextBlock.xaml"/>
-                <ResourceDictionary Source="pack://application:,,,/RevitPluginInstaller;component/Resources/TextBox/TextBox.xaml"/>
-                <ResourceDictionary Source="pack://application:,,,/RevitPluginInstaller;component/Resources/Label/Label.xaml"/>
-
+                <ResourceDictionary Source="pack://application:,,,/RevitPluginInstaller;component/Resources/AppResources.xaml" />
             </ResourceDictionary.MergedDictionaries>
-
         </ResourceDictionary>
-
     </Application.Resources>
 
 </Application>

@@ -11,9 +11,11 @@ public class SettingsService : ISettingsService
     private readonly string _settingsFileName;
     private SettingsResponse _settings;
 
+    public event EventHandler? SettingsChanged;
+
     public SettingsService()
     {
-        _settingsFileName = AppContext.BaseDirectory + SettingsFileName;
+        _settingsFileName = Path.Combine(AppContext.BaseDirectory, SettingsFileName);
         _settings = LoadSettings();
     }
 
@@ -32,8 +34,9 @@ public class SettingsService : ISettingsService
 
     private async Task SaveSettingsAsync()
     {
-        var json = JsonConvert.SerializeObject(_settings);
+        var json = JsonConvert.SerializeObject(_settings, Formatting.Indented);
         await File.WriteAllTextAsync(_settingsFileName, json);
+        SettingsChanged?.Invoke(this, EventArgs.Empty);
     }
 
     public Task<string> GetRevitPathAsync()

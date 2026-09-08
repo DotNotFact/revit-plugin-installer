@@ -2,6 +2,7 @@ using RevitPluginInstaller.Managers.Abstracts;
 using RevitPluginInstaller.Services.Abstracts;
 using RevitPluginInstaller.Models;
 using Newtonsoft.Json;
+using System.Globalization;
 using System.IO;
 
 namespace RevitPluginInstaller.Services.Bases;
@@ -12,6 +13,7 @@ public class PluginService : IPluginService
 
     private const string PluginsFileName = "plugins.json";
     private const string BackupFolderName = "backups";
+    private const string BackupStampFormat = "yyyyMMddHHmmss";
 
     private PluginResponse _pluginResponses = new();
 
@@ -24,6 +26,8 @@ public class PluginService : IPluginService
     private readonly ILoggerManager _logger;
 
     #endregion
+
+    public event EventHandler? PluginsChanged;
 
     public PluginService(ISettingsService settingsService, IFileService fileService, ILoggerManager logger)
     {
@@ -46,7 +50,10 @@ public class PluginService : IPluginService
         if (!Directory.Exists(addinsPath))
             return [];
 
-        return Directory.GetDirectories(addinsPath).Select(Path.GetFileName)!;
+        return Directory.GetDirectories(addinsPath)
+            .Select(Path.GetFileName)
+            .Where(name => !string.IsNullOrEmpty(name))
+            .OrderByDescending(name => name, StringComparer.OrdinalIgnoreCase)!;
     }
 
     public IEnumerable<PluginPack> GetPluginsForVersionAsync(string version)
@@ -59,6 +66,12 @@ public class PluginService : IPluginService
         return _pluginResponses.PluginPacks;
     }
 
+    public void Reload()
+    {
+        LoadPlugins();
+        PluginsChanged?.Invoke(this, EventArgs.Empty);
+    }
+
     #endregion
 
     #region [ Установка плагинов ]
@@ -67,16 +80,20 @@ public class PluginService : IPluginService
     {
         var revitPath = await _settingsService.GetRevitPathAsync();
         var destinationPath = Path.Combine(revitPath, "Addins", version);
+        Directory.CreateDirectory(destinationPath);
+
+        var fileList = files.ToList();
+
+        if (fileList.Count == 0)
+            return;
 
         var newPluginPack = new PluginPack
         {
             Id = Guid.NewGuid(),
-            Name = Path.GetFileName(files.First()),
+            Name = Path.GetFileName(fileList[0]),
             Version = version,
             InstallationDate = DateTime.Now,
         };
-
-        var fileList = files.ToList();
 
         for (int i = 0; i < fileList.Count; i++)
         {
@@ -240,7 +257,7 @@ public class PluginService : IPluginService
     public async Task CreateBackupAsync(Plugin plugin)
     {
         var revitPath = await _settingsService.GetRevitPathAsync();
-        var backupPath = Path.Combine(revitPath, BackupFolderName, DateTime.Now.ToString("yyyyMMddHHmmss"));
+        var backupPath = Path.Combine(revitPath, BackupFolderName, DateTime.Now.ToString(BackupStampFormat));
 
         Directory.CreateDirectory(backupPath);
 
@@ -258,6 +275,53 @@ public class PluginService : IPluginService
         await _logger.LogAsync($"Created backup for plugin: {plugin.Name}");
     }
 
+    public IReadOnlyList<BackupEntry> GetBackups()
+    {
+        var revitPath = _settingsService.GetRevitPathAsync().GetAwaiter().GetResult();
+
+        if (string.IsNullOrEmpty(revitPath))
+            return [];
+
+        var root = Path.Combine(revitPath, BackupFolderName);
+
+        if (!Directory.Exists(root))
+            return [];
+
+        return Directory.GetDirectories(root)
+            .Select(dir =>
+            {
+                var name = Path.GetFileName(dir);
+                var createdAt = DateTime.TryParseExact(name, BackupStampFormat, CultureInfo.InvariantCulture, DateTimeStyles.None, out var stamp)
+                    ? stamp
+                    : Directory.GetCreationTime(dir);
+
+                var items = Directory.EnumerateFileSystemEntries(dir)
+                    .Select(Path.GetFileName)
+                    .Where(n => !string.IsNullOrEmpty(n))
+                    .OrderBy(n => n, StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+
+                return new BackupEntry
+                {
+                    Path = dir,
+                    CreatedAt = createdAt,
+                    Items = items!,
+                    SizeBytes = GetDirectorySize(dir),
+                };
+            })
+            .OrderByDescending(b => b.CreatedAt)
+            .ToList();
+    }
+
+    public async Task DeleteBackupAsync(BackupEntry backup)
+    {
+        if (Directory.Exists(backup.Path))
+            await Task.Run(() => Directory.Delete(backup.Path, true));
+
+        await _logger.LogAsync($"Deleted backup: {backup.Path}");
+        PluginsChanged?.Invoke(this, EventArgs.Empty);
+    }
+
     #endregion
 
     private async Task SavePluginsAsync()
@@ -266,6 +330,7 @@ public class PluginService : IPluginService
         var json = JsonConvert.SerializeObject(_pluginResponses, Formatting.Indented);
 
         await File.WriteAllTextAsync(pluginsPath, json);
+        PluginsChanged?.Invoke(this, EventArgs.Empty);
     }
 
     private void LoadPlugins()
@@ -288,6 +353,23 @@ public class PluginService : IPluginService
         else
         {
             _pluginResponses = new();
+        }
+    }
+
+    private static long GetDirectorySize(string path)
+    {
+        try
+        {
+            return Directory.EnumerateFiles(path, "*", SearchOption.AllDirectories)
+                .Sum(f => new FileInfo(f).Length);
+        }
+        catch (IOException)
+        {
+            return 0;
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return 0;
         }
     }
 

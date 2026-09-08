@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection;
 using RevitPluginInstaller.ViewModels.Windows;
 using RevitPluginInstaller.Services.Abstracts;
 using RevitPluginInstaller.Managers.Abstracts;
@@ -28,16 +28,16 @@ public static class PersistenceExtensions
 
         services
             .AddTransient<DownloadPage>()
-            .AddTransient<SettingPage>()
-            .AddTransient<UpdatePage>()
-            .AddTransient<ChoosePage>();
+            .AddTransient<BackupsPage>()
+            .AddTransient<TransferPage>()
+            .AddTransient<SettingPage>();
 
         services
             .AddTransient<MainWindowViewModel>()
             .AddTransient<DownloadViewModel>()
-            .AddTransient<SettingsViewModel>()
-            .AddTransient<UpdateViewModel>()
-            .AddTransient<ChooseViewModel>();
+            .AddTransient<BackupsViewModel>()
+            .AddTransient<TransferViewModel>()
+            .AddTransient<SettingsViewModel>();
 
         return services;
     }

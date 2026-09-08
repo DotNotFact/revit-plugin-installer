@@ -1,201 +1,202 @@
-﻿<ResourceDictionary
+<ResourceDictionary
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <Storyboard x:Key="StartHoverSquareButtonStyle">
-        <ColorAnimation Storyboard.TargetProperty="(Button.Background).(SolidColorBrush.Color)" To="{StaticResource ApplicationBackgroundDefault400}" Duration="0:0:0.2"/>
-        <ColorAnimation Storyboard.TargetProperty="(Button.Foreground).(SolidColorBrush.Color)" To="{StaticResource ApplicationForegroundDefault}" Duration="0:0:0.2" />
-    </Storyboard>
-
-    <Storyboard x:Key="EndHoverSquareButtonStyle">
-        <ColorAnimation Storyboard.TargetProperty="(Button.Background).(SolidColorBrush.Color)" To="{StaticResource ApplicationBackgroundDefault300}" Duration="0:0:0.2" />
-        <ColorAnimation Storyboard.TargetProperty="(Button.Foreground).(SolidColorBrush.Color)" To="{StaticResource ApplicationForegroundDefault}" Duration="0:0:0.2" />
-    </Storyboard>
-
-    <Style x:Key="DefaultSquareButtonStyle" TargetType="{x:Type Button}">
-
+    <!-- Secondary button: surface + border, used everywhere by default -->
+    <Style x:Key="DefaultButtonStyle" TargetType="{x:Type Button}">
+        <Setter Property="Background" Value="{DynamicResource App.SurfaceRaised}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource App.Border}" />
+        <Setter Property="Foreground" Value="{DynamicResource App.Text}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Padding" Value="16,0" />
+        <Setter Property="Height" Value="40" />
+        <Setter Property="MinWidth" Value="40" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Cursor" Value="Hand" />
         <Setter Property="HorizontalContentAlignment" Value="Center" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
-        <Setter Property="HorizontalAlignment" Value="Stretch" />
-        <Setter Property="VerticalAlignment" Value="Center" />
-
-        <Setter Property="BorderThickness" Value="0"/>
-        <Setter Property="Cursor" Value="Hand"/>
-
-        <Setter Property="Background" Value="{DynamicResource ApplicationBackgroundDefault300Brush}" />
-        <!--<Setter Property="BorderBrush" Value="{DynamicResource ApplicationBackgroundDefault500Brush}" />-->
-        <Setter Property="Foreground" Value="{DynamicResource ApplicationForegroundDefaultBrush}" />
-
-        <Setter Property="FontFamily" Value="Bahnschrift" />
-        <Setter Property="FontWeight" Value="Normal" />
-        <Setter Property="FontSize" Value="20" />
-
-        <!--<Setter Property="FocusVisualStyle" Value="{DynamicResource }" />-->
         <Setter Property="OverridesDefaultStyle" Value="True" />
         <Setter Property="SnapsToDevicePixels" Value="True" />
-
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
         <Setter Property="Template">
-
             <Setter.Value>
-
                 <ControlTemplate TargetType="{x:Type Button}">
-
-                    <Border x:Name="ContentBorder" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="5">
-
-                        <ContentPresenter x:Name="ContentPresenter" Margin="11" VerticalAlignment="Center"  HorizontalAlignment="Center" />
-
+                    <Border x:Name="Root"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="10"
+                            Padding="{TemplateBinding Padding}">
+                        <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                          VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                          RecognizesAccessKey="True" />
                     </Border>
-
                     <ControlTemplate.Triggers>
-
-                        <MultiTrigger>
-
-                            <MultiTrigger.Conditions>
-                                <Condition Property="IsMouseOver" Value="True" />
-                                <Condition Property="IsPressed" Value="False" />
-                            </MultiTrigger.Conditions>
-
-                            <!--<MultiTrigger.EnterActions>
-                                <BeginStoryboard Storyboard="{StaticResource StartHoverSquareButtonStyle}"/>  
-                            </MultiTrigger.EnterActions>
-
-                            <MultiTrigger.ExitActions>
-                                <BeginStoryboard Storyboard="{StaticResource EndHoverSquareButtonStyle}"/> 
-                            </MultiTrigger.ExitActions>-->
-
-                            <Setter Property="Background" Value="{StaticResource ApplicationBackgroundDefault400Brush}" />
-                            <!--<Setter Property="BorderBrush" Value="{StaticResource ApplicationBackgroundDefault500Brush}" />-->
-                            <Setter Property="Foreground" Value="{DynamicResource ApplicationForegroundDefaultBrush}" />
-
-                        </MultiTrigger>
-
-                        <MultiTrigger>
-
-                            <MultiTrigger.Conditions>
-                                <Condition Property="IsMouseOver" Value="True" />
-                                <Condition Property="IsPressed" Value="True" />
-                            </MultiTrigger.Conditions>
-
-                            <Setter TargetName="ContentBorder" Property="Opacity" Value="0.8" />
-                            <Setter TargetName="ContentPresenter" Property="TextElement.Foreground" Value="{DynamicResource ApplicationForegroundDefault100Brush}" />
-
-                        </MultiTrigger>
-
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Root" Property="Background" Value="{DynamicResource App.SurfaceHover}" />
+                            <Setter TargetName="Root" Property="BorderBrush" Value="{DynamicResource App.BorderStrong}" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Root" Property="Opacity" Value="0.8" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="Root" Property="Opacity" Value="0.45" />
+                        </Trigger>
                     </ControlTemplate.Triggers>
-
                 </ControlTemplate>
-
             </Setter.Value>
-
         </Setter>
-
     </Style>
 
-    <Style BasedOn="{StaticResource DefaultSquareButtonStyle}" TargetType="{x:Type Button}" />
+    <Style BasedOn="{StaticResource DefaultButtonStyle}" TargetType="{x:Type Button}" />
 
-    <!--<Style x:Key="GradientBlueButton" TargetType="{x:Type Button}">
+    <!-- Primary call-to-action: accent gradient -->
+    <Style x:Key="PrimaryButtonStyle" TargetType="{x:Type Button}" BasedOn="{StaticResource DefaultButtonStyle}">
+        <Setter Property="Background" Value="{DynamicResource App.AccentGradient}" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Foreground" Value="#FFFFFF" />
+        <Setter Property="Padding" Value="20,0" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type Button}">
+                    <Grid>
+                        <Border x:Name="Glow" CornerRadius="10" Background="{DynamicResource App.Accent}" Opacity="0.35" Margin="4,8,4,-4">
+                            <Border.Effect>
+                                <BlurEffect Radius="14" />
+                            </Border.Effect>
+                        </Border>
+                        <Border x:Name="Root"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="10"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" RecognizesAccessKey="True" />
+                        </Border>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Glow" Property="Opacity" Value="0.55" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Root" Property="Opacity" Value="0.85" />
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="Root" Property="Opacity" Value="0.45" />
+                            <Setter TargetName="Glow" Property="Opacity" Value="0" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
 
-        <Setter Property="Background" Value="#000" />
-        <Setter Property="Foreground" Value="{DynamicResource ForegroundBrush}" />
+    <!-- Square icon button -->
+    <Style x:Key="IconButtonStyle" TargetType="{x:Type Button}" BasedOn="{StaticResource DefaultButtonStyle}">
+        <Setter Property="Width" Value="36" />
+        <Setter Property="Height" Value="36" />
+        <Setter Property="MinWidth" Value="36" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="Foreground" Value="{DynamicResource App.TextSecondary}" />
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Foreground" Value="{DynamicResource App.Text}" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
 
+    <!-- Icon button that turns red on hover -->
+    <Style x:Key="DangerIconButtonStyle" TargetType="{x:Type Button}" BasedOn="{StaticResource IconButtonStyle}">
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Foreground" Value="{DynamicResource App.Danger}" />
+                <Setter Property="BorderBrush" Value="{DynamicResource App.Danger}" />
+                <Setter Property="Background" Value="{DynamicResource App.DangerSoft}" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <!-- Borderless button for the title bar -->
+    <Style x:Key="CaptionButtonStyle" TargetType="{x:Type Button}" BasedOn="{StaticResource DefaultButtonStyle}">
+        <Setter Property="Width" Value="40" />
+        <Setter Property="Height" Value="32" />
+        <Setter Property="MinWidth" Value="40" />
+        <Setter Property="Padding" Value="0" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Foreground" Value="{DynamicResource App.TextSecondary}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type Button}">
+                    <Border x:Name="Root" Background="{TemplateBinding Background}" CornerRadius="8">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Root" Property="Background" Value="{DynamicResource App.SurfaceHover}" />
+                            <Setter Property="Foreground" Value="{DynamicResource App.Text}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="CaptionCloseButtonStyle" TargetType="{x:Type Button}" BasedOn="{StaticResource CaptionButtonStyle}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type Button}">
+                    <Border x:Name="Root" Background="{TemplateBinding Background}" CornerRadius="8">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Root" Property="Background" Value="#E81123" />
+                            <Setter Property="Foreground" Value="#FFFFFF" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Sidebar navigation item (RadioButton so only one is active) -->
+    <Style x:Key="NavItemStyle" TargetType="{x:Type RadioButton}">
+        <Setter Property="Foreground" Value="{DynamicResource App.TextSecondary}" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="Height" Value="44" />
+        <Setter Property="Padding" Value="14,0" />
+        <Setter Property="Margin" Value="0,2" />
+        <Setter Property="FontSize" Value="14" />
         <Setter Property="FontWeight" Value="SemiBold" />
-        <Setter Property="BorderThickness" Value="0"/>
-        <Setter Property="FontSize" Value="20"/>
-
-        <Setter Property="Cursor" Value="Hand"/>
-
-        <Setter Property="RenderTransformOrigin" Value="0.5 0.5"/>
-
-        <Setter Property="RenderTransform">
-            <Setter.Value>
-                <ScaleTransform ScaleX=".9" ScaleY=".9"/>
-            </Setter.Value>
-        </Setter>
-
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
         <Setter Property="Template">
-
             <Setter.Value>
-
-                <ControlTemplate TargetType="Button">
-
-                    <Border Background="{TemplateBinding Background}" CornerRadius="5" VerticalAlignment="Center" HorizontalAlignment="Center">
-                        <ContentPresenter Margin="8 5" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                <ControlTemplate TargetType="{x:Type RadioButton}">
+                    <Border x:Name="Root"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="10"
+                            Padding="{TemplateBinding Padding}">
+                        <ContentPresenter VerticalAlignment="Center" HorizontalAlignment="Stretch" />
                     </Border>
-
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Root" Property="Background" Value="{DynamicResource App.SurfaceHover}" />
+                            <Setter Property="Foreground" Value="{DynamicResource App.Text}" />
+                        </Trigger>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Root" Property="Background" Value="{DynamicResource App.AccentSoft}" />
+                            <Setter TargetName="Root" Property="BorderBrush" Value="{DynamicResource App.AccentBorder}" />
+                            <Setter Property="Foreground" Value="{DynamicResource App.Text}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
                 </ControlTemplate>
-
             </Setter.Value>
-
         </Setter>
-
-        <Style.Triggers>
-
-            <Trigger Property="IsMouseOver" Value="True">
-
-                <Trigger.EnterActions>
-                    <BeginStoryboard  Storyboard="{StaticResource StartScaleGradientBlueButton}"/>
-                </Trigger.EnterActions>
-
-                <Trigger.ExitActions>
-                    <BeginStoryboard  Storyboard="{StaticResource EndScaleGradientBlueButton}"/>
-                </Trigger.ExitActions>
-
-            </Trigger>
-
-        </Style.Triggers>
-
     </Style>
-
-    <Style x:Key="GradientGrayButton" TargetType="{x:Type Button}">
-
-        <Setter Property="Background" Value="#000"/>
-        <Setter Property="Foreground" Value="{DynamicResource ForegroundBrush}"/>
-
-        <Setter Property="BorderThickness" Value="0"/>
-        <Setter Property="FontSize" Value="32"/>
-
-        <Setter Property="Cursor" Value="Hand"/>
-
-        <Setter Property="RenderTransformOrigin" Value="0.5 0.5"/>
-
-        <Setter Property="RenderTransform">
-            <Setter.Value>
-                <ScaleTransform ScaleX=".9" ScaleY=".9"/>
-            </Setter.Value>
-        </Setter>
-
-        <Setter Property="Template">
-
-            <Setter.Value>
-
-                <ControlTemplate TargetType="Button">
-
-                    <Border Background="{TemplateBinding Background}" CornerRadius="5">
-                        <ContentPresenter Margin="8 5" VerticalAlignment="Center" HorizontalAlignment="Center" />
-                    </Border>
-
-                </ControlTemplate>
-
-            </Setter.Value>
-
-        </Setter>
-
-        <Style.Triggers>
-
-            <Trigger Property="IsMouseOver" Value="True">
-
-                <Trigger.EnterActions>
-                    <BeginStoryboard  Storyboard="{StaticResource StartScaleGradientGrayButton}"/>
-                </Trigger.EnterActions>
-
-                <Trigger.ExitActions>
-                    <BeginStoryboard  Storyboard="{StaticResource EndScaleGradientGrayButton}"/>
-                </Trigger.ExitActions>
-
-            </Trigger>
-
-        </Style.Triggers>
-
-    </Style>-->
 
 </ResourceDictionary>

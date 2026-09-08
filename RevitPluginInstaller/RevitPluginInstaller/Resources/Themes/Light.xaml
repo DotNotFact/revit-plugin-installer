@@ -1,29 +1,83 @@
-﻿<ResourceDictionary
+<ResourceDictionary
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <Color x:Key="ApplicationBackgroundDefault">#ffffff</Color>
-    <Color x:Key="ApplicationForegroundDefault">#000000</Color>
+    <!-- Semantic palette -->
+    <Color x:Key="App.BackgroundColor">#F3F4F8</Color>
+    <Color x:Key="App.SidebarColor">#FFFFFF</Color>
+    <Color x:Key="App.SurfaceColor">#FFFFFF</Color>
+    <Color x:Key="App.SurfaceHoverColor">#F4F6FA</Color>
+    <Color x:Key="App.SurfaceRaisedColor">#FFFFFF</Color>
+    <Color x:Key="App.BorderColor">#E3E6EE</Color>
+    <Color x:Key="App.BorderStrongColor">#C9CFDB</Color>
+    <Color x:Key="App.TextColor">#1B1F2E</Color>
+    <Color x:Key="App.TextSecondaryColor">#525A6D</Color>
+    <Color x:Key="App.TextMutedColor">#8A90A3</Color>
 
-    <Color x:Key="ApplicationForegroundDefault100">#151515</Color>
-    
-    <Color x:Key="ApplicationBackgroundDefault100">#ffffff</Color>
-    <Color x:Key="ApplicationBackgroundDefault200">#ececec</Color>
-    <Color x:Key="ApplicationBackgroundDefault300">#d9d9d9</Color>
-    <Color x:Key="ApplicationBackgroundDefault400">#c7c7c7</Color>
-    <Color x:Key="ApplicationBackgroundDefault500">#b4b4b4</Color>
-    <Color x:Key="ApplicationBackgroundDefault600">#a3a3a3</Color>
+    <Color x:Key="App.AccentColor">#F2582A</Color>
+    <Color x:Key="App.AccentHoverColor">#FF6A3D</Color>
+    <Color x:Key="App.AccentSoftColor">#FFEDE5</Color>
+    <Color x:Key="App.AccentBorderColor">#FFCDB8</Color>
+
+    <Color x:Key="App.SuccessColor">#1F9D61</Color>
+    <Color x:Key="App.SuccessSoftColor">#E1F7EC</Color>
+    <Color x:Key="App.WarningColor">#B7791F</Color>
+    <Color x:Key="App.WarningSoftColor">#FFF3D6</Color>
+    <Color x:Key="App.DangerColor">#E5484D</Color>
+    <Color x:Key="App.DangerSoftColor">#FDECEC</Color>
+
+    <SolidColorBrush x:Key="App.Background" Color="{StaticResource App.BackgroundColor}" />
+    <SolidColorBrush x:Key="App.Sidebar" Color="{StaticResource App.SidebarColor}" />
+    <SolidColorBrush x:Key="App.Surface" Color="{StaticResource App.SurfaceColor}" />
+    <SolidColorBrush x:Key="App.SurfaceHover" Color="{StaticResource App.SurfaceHoverColor}" />
+    <SolidColorBrush x:Key="App.SurfaceRaised" Color="{StaticResource App.SurfaceRaisedColor}" />
+    <SolidColorBrush x:Key="App.Border" Color="{StaticResource App.BorderColor}" />
+    <SolidColorBrush x:Key="App.BorderStrong" Color="{StaticResource App.BorderStrongColor}" />
+    <SolidColorBrush x:Key="App.Text" Color="{StaticResource App.TextColor}" />
+    <SolidColorBrush x:Key="App.TextSecondary" Color="{StaticResource App.TextSecondaryColor}" />
+    <SolidColorBrush x:Key="App.TextMuted" Color="{StaticResource App.TextMutedColor}" />
+
+    <SolidColorBrush x:Key="App.Accent" Color="{StaticResource App.AccentColor}" />
+    <SolidColorBrush x:Key="App.AccentHover" Color="{StaticResource App.AccentHoverColor}" />
+    <SolidColorBrush x:Key="App.AccentSoft" Color="{StaticResource App.AccentSoftColor}" />
+    <SolidColorBrush x:Key="App.AccentBorder" Color="{StaticResource App.AccentBorderColor}" />
+
+    <LinearGradientBrush x:Key="App.AccentGradient" StartPoint="0,0" EndPoint="1,1">
+        <GradientStop Color="#FF7A3D" Offset="0" />
+        <GradientStop Color="#FF4D6D" Offset="1" />
+    </LinearGradientBrush>
+
+    <LinearGradientBrush x:Key="App.ProgressGradient" StartPoint="0,0" EndPoint="1,0">
+        <GradientStop Color="#FF7A3D" Offset="0" />
+        <GradientStop Color="#FF4D6D" Offset="1" />
+    </LinearGradientBrush>
+
+    <SolidColorBrush x:Key="App.Success" Color="{StaticResource App.SuccessColor}" />
+    <SolidColorBrush x:Key="App.SuccessSoft" Color="{StaticResource App.SuccessSoftColor}" />
+    <SolidColorBrush x:Key="App.Warning" Color="{StaticResource App.WarningColor}" />
+    <SolidColorBrush x:Key="App.WarningSoft" Color="{StaticResource App.WarningSoftColor}" />
+    <SolidColorBrush x:Key="App.Danger" Color="{StaticResource App.DangerColor}" />
+    <SolidColorBrush x:Key="App.DangerSoft" Color="{StaticResource App.DangerSoftColor}" />
+
+    <!-- Legacy keys kept for older styles -->
+    <Color x:Key="ApplicationBackgroundDefault">#F3F4F8</Color>
+    <Color x:Key="ApplicationForegroundDefault">#1B1F2E</Color>
+    <Color x:Key="ApplicationForegroundDefault100">#1B1F2E</Color>
+    <Color x:Key="ApplicationBackgroundDefault100">#F3F4F8</Color>
+    <Color x:Key="ApplicationBackgroundDefault200">#FFFFFF</Color>
+    <Color x:Key="ApplicationBackgroundDefault300">#EEF0F5</Color>
+    <Color x:Key="ApplicationBackgroundDefault400">#E3E6EE</Color>
+    <Color x:Key="ApplicationBackgroundDefault500">#C9CFDB</Color>
+    <Color x:Key="ApplicationBackgroundDefault600">#B0B7C6</Color>
 
     <SolidColorBrush x:Key="ApplicationBackgroundDefaultBrush" Color="{StaticResource ApplicationBackgroundDefault}" />
     <SolidColorBrush x:Key="ApplicationForegroundDefaultBrush" Color="{StaticResource ApplicationForegroundDefault}" />
-
     <SolidColorBrush x:Key="ApplicationForegroundDefault100Brush" Color="{StaticResource ApplicationForegroundDefault100}" />
-
     <SolidColorBrush x:Key="ApplicationBackgroundDefault100Brush" Color="{StaticResource ApplicationBackgroundDefault100}" />
     <SolidColorBrush x:Key="ApplicationBackgroundDefault200Brush" Color="{StaticResource ApplicationBackgroundDefault200}" />
     <SolidColorBrush x:Key="ApplicationBackgroundDefault300Brush" Color="{StaticResource ApplicationBackgroundDefault300}" />
     <SolidColorBrush x:Key="ApplicationBackgroundDefault400Brush" Color="{StaticResource ApplicationBackgroundDefault400}" />
     <SolidColorBrush x:Key="ApplicationBackgroundDefault500Brush" Color="{StaticResource ApplicationBackgroundDefault500}" />
-    <SolidColorBrush x:Key="ApplicationBackgroundDefault600Brush" Color="{StaticResource ApplicationBackgroundDefault600}" /> 
+    <SolidColorBrush x:Key="ApplicationBackgroundDefault600Brush" Color="{StaticResource ApplicationBackgroundDefault600}" />
 
 </ResourceDictionary>

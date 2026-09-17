@@ -15,7 +15,7 @@ public class TransferViewModel : ViewModel
     private readonly ILoggerManager _logger;
 
     public string Title => "Экспорт / импорт";
-    public string Summary => "Список установленных плагинов в JSON — чтобы перенести набор на другую машину или восстановить после переустановки";
+    public string Summary => "Список установленных плагинов в JSON - чтобы перенести набор на другую машину или восстановить после переустановки";
 
     private int _pluginCount;
     public int PluginCount

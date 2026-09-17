@@ -67,11 +67,11 @@ internal static class Program
             {
                 await Idle(window);
 
-                // 1. Installed — with one queued file and an installation in flight
+                // 1. Installed - with one queued file and an installation in flight
                 var installed = (DownloadPage)window.MainFrame.Content;
                 installed.ViewModel.DropCommand.Execute(new DataObject(DataFormats.FileDrop, new[] { DemoData.PendingFile(demoRoot) }));
                 await Idle(window);
-                SimulateProgress(installed.ViewModel, "Установка MEP Toolkit 2.2 — копирование файлов…", 72);
+                SimulateProgress(installed.ViewModel, "Установка MEP Toolkit 2.2 - копирование файлов…", 72);
                 await Idle(window);
                 Capture(window, Path.Combine(outputDir, "01-installed.png"), scale);
 
@@ -218,7 +218,7 @@ internal static class DemoData
             }
         }
 
-        // Older, empty version folder — shows up in the sidebar with a zero counter
+        // Older, empty version folder - shows up in the sidebar with a zero counter
         Directory.CreateDirectory(Path.Combine(addins, "2023"));
 
         File.WriteAllText(Path.Combine(root, "plugins.json"),

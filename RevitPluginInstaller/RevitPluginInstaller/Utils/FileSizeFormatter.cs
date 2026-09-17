@@ -10,7 +10,7 @@ public static class FileSizeFormatter
     public static string Format(long bytes)
     {
         if (bytes <= 0)
-            return "—";
+            return "-";
 
         double value = bytes;
         int unit = 0;

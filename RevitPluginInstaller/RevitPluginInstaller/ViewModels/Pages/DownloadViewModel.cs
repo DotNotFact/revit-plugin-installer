@@ -41,7 +41,7 @@ public class DownloadViewModel : ViewModel
         }
     }
 
-    public string Title => string.IsNullOrEmpty(Version) ? "Плагины" : $"Плагины — Revit {Version}";
+    public string Title => string.IsNullOrEmpty(Version) ? "Плагины" : $"Плагины - Revit {Version}";
 
     private string _summary = string.Empty;
     public string Summary
@@ -95,7 +95,7 @@ public class DownloadViewModel : ViewModel
         private set => Set(ref _isEmpty, value);
     }
 
-    public string DropHint => "Перетащите сюда .dll / .addin файлы или папку плагина — установка с автоматическим бэкапом";
+    public string DropHint => "Перетащите сюда .dll / .addin файлы или папку плагина - установка с автоматическим бэкапом";
 
     #endregion
 
@@ -256,12 +256,12 @@ public class DownloadViewModel : ViewModel
         {
             IsBusy = true;
             InstallationProgress = 0;
-            StatusText = $"Установка {count} {PluralFiles(count)} — копирование…";
+            StatusText = $"Установка {count} {PluralFiles(count)} - копирование…";
 
             var progress = new Progress<int>(value =>
             {
                 InstallationProgress = value;
-                StatusText = $"Установка в Revit {Version} — копирование файлов… {value}%";
+                StatusText = $"Установка в Revit {Version} - копирование файлов… {value}%";
             });
 
             await _pluginService.InstallPluginsAsync(files, Version, progress);
@@ -272,7 +272,7 @@ public class DownloadViewModel : ViewModel
         catch (Exception ex)
         {
             await _logger.LogAsync($"[Error] Install failed: {ex}");
-            StatusText = "Ошибка установки — подробности в логе";
+            StatusText = "Ошибка установки - подробности в логе";
             MessageBox.Show(ex.Message, "Не удалось установить", MessageBoxButton.OK, MessageBoxImage.Error);
         }
         finally
@@ -323,7 +323,7 @@ public class DownloadViewModel : ViewModel
         catch (Exception ex)
         {
             await _logger.LogAsync($"[Error] Remove failed: {ex}");
-            StatusText = "Ошибка удаления — подробности в логе";
+            StatusText = "Ошибка удаления - подробности в логе";
             MessageBox.Show(ex.Message, "Не удалось удалить", MessageBoxButton.OK, MessageBoxImage.Error);
         }
         finally
@@ -358,7 +358,7 @@ public class DownloadViewModel : ViewModel
         catch (Exception ex)
         {
             await _logger.LogAsync($"[Error] Remove all failed: {ex}");
-            StatusText = "Ошибка удаления — подробности в логе";
+            StatusText = "Ошибка удаления - подробности в логе";
             MessageBox.Show(ex.Message, "Не удалось удалить", MessageBoxButton.OK, MessageBoxImage.Error);
         }
         finally
@@ -383,7 +383,7 @@ public class DownloadViewModel : ViewModel
         catch (Exception ex)
         {
             await _logger.LogAsync($"[Error] Backup failed: {ex}");
-            StatusText = "Ошибка бэкапа — подробности в логе";
+            StatusText = "Ошибка бэкапа - подробности в логе";
         }
         finally
         {

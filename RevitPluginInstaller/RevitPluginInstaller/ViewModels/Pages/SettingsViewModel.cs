@@ -50,8 +50,8 @@ public class SettingsViewModel : ViewModel
         }
     }
 
-    public string LogPath => string.IsNullOrEmpty(RevitPath) ? "—" : Path.Combine(RevitPath, "RevitPluginInstaller.log");
-    public string RegistryPath => string.IsNullOrEmpty(RevitPath) ? "—" : Path.Combine(RevitPath, "plugins.json");
+    public string LogPath => string.IsNullOrEmpty(RevitPath) ? "-" : Path.Combine(RevitPath, "RevitPluginInstaller.log");
+    public string RegistryPath => string.IsNullOrEmpty(RevitPath) ? "-" : Path.Combine(RevitPath, "plugins.json");
     public string AppVersion { get; }
 
     public ICommand SelectFolderCommand { get; }

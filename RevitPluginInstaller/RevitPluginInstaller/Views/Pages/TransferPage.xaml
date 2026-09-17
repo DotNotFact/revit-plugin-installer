@@ -67,7 +67,7 @@
                     </Border>
                     <TextBlock Text="Импорт из JSON" FontSize="18" FontWeight="SemiBold" Margin="0,18,0,6" />
                     <TextBlock Style="{StaticResource SecondaryTextStyle}" TextWrapping="Wrap" TextTrimming="None"
-                               Text="Восстанавливает реестр из ранее экспортированного файла. Текущие записи будут заменены — перед импортом стоит сделать экспорт." />
+                               Text="Восстанавливает реестр из ранее экспортированного файла. Текущие записи будут заменены - перед импортом стоит сделать экспорт." />
 
                     <Border CornerRadius="10" Padding="14,12" Margin="0,18,0,0" Background="{DynamicResource App.WarningSoft}" BorderBrush="{DynamicResource App.Warning}" BorderThickness="1">
                         <StackPanel Orientation="Horizontal">

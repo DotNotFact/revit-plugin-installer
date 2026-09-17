@@ -58,7 +58,7 @@
                         <Grid>
                             <Rectangle RadiusX="12" RadiusY="12" Stroke="{DynamicResource App.BorderStrong}" StrokeThickness="1.5" StrokeDashArray="5 4" />
                             <TextBlock HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource App.TextSecondary}" FontSize="14" TextTrimming="None">
-                                <Run Text="Перетащите сюда " /><Run Text=".dll / .addin" Foreground="{DynamicResource App.Accent}" FontWeight="SemiBold" /><Run Text=" файлы или папку плагина — установка с автоматическим бэкапом" />
+                                <Run Text="Перетащите сюда " /><Run Text=".dll / .addin" Foreground="{DynamicResource App.Accent}" FontWeight="SemiBold" /><Run Text=" файлы или папку плагина - установка с автоматическим бэкапом" />
                             </TextBlock>
                         </Grid>
                     </Border>
